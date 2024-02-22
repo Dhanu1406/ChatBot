@@ -22,4 +22,4 @@ install the required libraries listed in requirement.txt by running: pip install
 Interact with Chatbot in Console: Additionally, to interact with our chatbot directly in the console,
 open another command prompt and navigate to your project directory. Inside the virtual env
 
- -->>run the following command: query.bat "Enter your queries"
+-->>run the following command: query.bat "Enter your queries"
