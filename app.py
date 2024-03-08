@@ -5,8 +5,10 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.document_loaders import TextLoader
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain.chains.question_answering import load_qa_chain
+from langchain.chains.question_answering import load_qa_chain, StuffDocumentsChain, LLMChain
 from langchain_community.llms import HuggingFaceHub
+from langchain.prompts import PromptTemplate
+import random
 from flask_cors import CORS
 
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = ""  # change this
@@ -14,8 +16,7 @@ os.environ["HUGGINGFACEHUB_API_TOKEN"] = ""  # change this
 app = Flask(__name__)
 CORS(app)
 
-loader = TextLoader(r"C:\Dhanush\Angular-CRUD\Backend\data.txt")
-  # change this
+loader = TextLoader(r"C:\Dhanush\Angular-CRUD\Backend\data.txt") # change this
 document = loader.load()
 
 def text_wrap_preserves_newlines(text, width=110):
@@ -30,7 +31,20 @@ embeddings = HuggingFaceEmbeddings()
 db = FAISS.from_documents(docs, embeddings)
 
 llm = HuggingFaceHub(repo_id="google/flan-t5-xxl", model_kwargs={"temperature": 1.0, "max_length": 800})
-chain = load_qa_chain(llm, chain_type="stuff")
+unrelated_responses = [
+    "I'm sorry, the question is not related to the document or no relevant information was found.",
+    "Unfortunately, I couldn't find any relevant information in the document to answer your question.",
+    "It appears that the question is not related to the document. Can I help you with anything else?",
+    # Add more responses as needed
+]
+selected_response = random.choice(unrelated_responses)
+prompt_template = PromptTemplate(
+    input_variables=["context", "question"],
+    template=f"Consider. {selected_response}\n\n**Please Contact The Development Team**\n\n{{context}}\n\nQuestion: {{question}}\n"
+)
+llm_chain = LLMChain(prompt=prompt_template, llm=llm)
+
+chain =llm_chain = StuffDocumentsChain(llm_chain=llm_chain, document_variable_name="context")
 
 @app.route('/query', methods=['POST'])
 def query():
